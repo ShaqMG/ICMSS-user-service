@@ -1,0 +1,106 @@
+spring:
+  application:
+    name: user-service
+  cloud:
+    config:
+      enabled: false
+  kafka:
+    bootstrap-servers: ${BOOTSTRAP_SERVER}
+    consumer:
+      bootstrap-servers: ${BOOTSTRAP_SERVER}
+      group-id: ${KAFKA_GROUP_ID}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: "*"
+    producer:
+      bootstrap-servers: ${BOOTSTRAP_SERVER}
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${DATASOURCE_URL}
+    username: ${DATASOURCE_USERNAME}
+    password: ${DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database: postgresql
+    generate-ddl: true
+
+  mail:
+    host: smtp.gmail.com
+    username: "smartride6@gmail.com"
+    password: "hejrxqfjlthbstvq"
+    port: 587
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${ISSUER_URI}
+          jwk-set-uri: ${JWK_SET_URI}
+
+      client:
+        registration:
+          resource:
+            authorization-grant-type: client_credentials
+            client-id: user-service
+            client-secret: ${CLIENT_SECRET}
+            redirect-uri: ${REDIRECT_URI}
+        provider:
+          resource:
+            token-uri: ${TOKEN_URI}
+
+  redis:
+    host: "localhost"
+    port: ${REDIS_PORT}
+
+server:
+  port: 9004
+
+management:
+  health:
+    circuit-breakers:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
+
+eureka:
+  client:
+    registerWithEureka: true
+    serviceUrl:
+      defaultZone: ${SERVICE_URL_DEFAULT_ZONE}
+  instance:
+    preferIpAddress: true
+
+resilience4j:
+  circuit breaker:
+    instances:
+      keycloak:
+        registerHealthIndicator: true
+        eventConsumerBufferSize: 10
+        failureRateThreshold: 70
+        minimumNumberOfCalls: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowSize: 10
+        slidingWindowType: COUNT_BASED
+        ignore-exceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException.Unauthorized
